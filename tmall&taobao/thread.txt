@@ -1,0 +1,10 @@
+
+main(1111,'',0,'https://vichy.tmall.com',1,1,'2016-05-01')
+main(1111,'',0,'https://larocheposay.tmall.com/',1,1,'2016-05-01')
+main(1111,'',0,'https://skinceuticals.tmall.com',1,1,'2016-05-01')
+main(1111,'',0,'https://eskin.tmall.com/',1,1,'2016-05-01')
+main('ALOBON',1,100,1,1,'2016-09-01')
+main('雅邦',2,100,1,1,'2016-09-01')
+main('Alverde',3,100,1,1,'2016-09-01')
+main('艾薇德',4,100,1,1,'2016-09-01');
+main('Anna Sui',5,100,1,1,'2016-09-01')
