@@ -142,9 +142,6 @@ def parseDateStrToStamp(datestr):
        return time.mktime(time.strptime(datestr,'%Y-%m-%d %H:%M:%S'))
 
 
-def parseinputDateStrToStamp(datestr):
-    return time.mktime(time.strptime(datestr, '%Y-%m-%d '))
-
 def checkThreadPage(xmldata):
     if(len(getThreadNodes(xmldata))>0):
         return False
@@ -192,7 +189,7 @@ def parseContent(rownode):
     if len(node)==0:
         raise NameError('Can not parse Content!')
     content = ' '.join(node)
-    return content
+    return content.strip().replace('\n','')
 
 def parsePosterURL(rownode):
     node=rownode.xpath('.//div[@class="authi"]/a/@href')
@@ -234,16 +231,20 @@ def parseDateOfPost(rownode):
    
 def parseSinglePostRow(rownode,thesubject,url2parse):
     global  thepostCurrentPage
-    posterName=parsePosterName(rownode)
-    dateOfPost=parseDateOfPost(rownode)
-    content=parseContent(rownode)
-    posterURL=parsePosterURL(rownode)
-    floor=parseFloor(rownode)
-    posterID=parsePosterID(posterURL)
-    subject=thesubject
-    threadURL=url2parse
-    isTopicPost= 1 if floor==u'楼主' else 0
-    pageNum = thepostCurrentPage
+    try:
+
+        posterName=parsePosterName(rownode)
+        dateOfPost=parseDateOfPost(rownode)
+        content=parseContent(rownode)
+        posterURL=parsePosterURL(rownode)
+        floor=parseFloor(rownode)
+        posterID=parsePosterID(posterURL)
+        subject=thesubject
+        threadURL = url2parse
+        isTopicPost= 1 if floor == u'楼主' else 0
+        pageNum = thepostCurrentPage
+    except Exception as err:
+        print(err)
 
     node = [1111,subject,content,dateOfPost,floor,posterName,posterURL,posterID,threadURL,isTopicPost,pageNum]
     return node
@@ -256,12 +257,10 @@ def parseSinglePostPageAndNeedTurnToNext(xmldata,subject,url2parse):
 
     for node in nodes:
         post=parseSinglePostRow(node,subject,url2parse)
-
-        if parseDateStrToStamp(post[3]) >= parseinputDateStrToStamp(postDateTime):
+        if parseDateStrToStamp(parseDateStr(parseDate(post[3]))) >= parseDateStrToStamp(parseDateStr(parseDate(postDateTime))):
             postData.append(post)
             print('save a record successfully !')
     return True if getNextPostPageNode(xmldata) != None else False
-
 
 
 def  parseSingleThreadPageAndNeedTurnToNext(xmldata):
@@ -274,6 +273,7 @@ def  parseSingleThreadPageAndNeedTurnToNext(xmldata):
         url = url[0].strip()
         threadurl.append(url)
     return True if  getNextThreadPageNode(xmldata) != None  else False
+
 
 def getNextThreadPageNode(xmldata):
 
@@ -304,13 +304,14 @@ def turnTopostPage(url):
     # waitTime=random.uniform(1, 2)
     # time.sleep(waitTime)
     res = requests.get(str(url), timeout=10).text
-    return res
+    xmldata = etree.HTML(res)
+    return xmldata
 
 
 def parseSubject(xmldata):
 
     subject = xmldata.xpath('.//td[@class = "ptm pbn"]/div[@class = "ts z h1"]')
-    subject  =subject[0].xpath('string(.)').strip().replace('[复制链接]','')
+    subject  =subject[0].xpath('string(.)').strip().replace('[复制链接]','').replace('\n','')
     return subject
 
 
@@ -330,11 +331,9 @@ def postParse(url2parse):
             pageNode = getNextPostPageNode(xmldata)
             if not pageNode :
                 break
-            xml = turnTopostPage(pageNode)
-            xmldata = etree.HTML(xml)
+            xmldata = turnTopostPage(pageNode)
         
     except Exception as err:
-        errCode=1
         print ('Has an error while spidering')
         print(err)
     finally:
@@ -347,6 +346,8 @@ def doCapture(keyword):
     global threadurl,postData,postFlag
     theKeywordThreadUrl = "http://search.cehome.com/cse/search?q="+keyword+"&p=0&s=2289651421703031038&nsid=5"
     theCurrentPage=1
+    threadurl = []
+    postFlag = 1
 
     try:
 
@@ -394,12 +395,12 @@ def doCapture(keyword):
 
 def main():
 
-    global clr,postData,postDateTime
+    global clr,postDateTime,postData
     clr = Color()
     clr.print_green_text('*'*40)
     clr.print_green_text('##  Python  3.4')
     clr.print_green_text('##  Author  Liam')
-    clr.print_green_text('##  Date   11/10/2016')
+    clr.print_green_text('##  Date    11/10/2016')
     clr.print_green_text('##  Crawl   CehomeSearch')
     clr.print_green_text('*'*40)
 
@@ -414,15 +415,13 @@ def main():
        sys.exit(0)
 
     postDateTime = input("请输入抓取截止日期：(格式如 2016-01-01)")
+    # postDateTime = '2016-11-10'
 
     count = 0
     postData = []
-    data =[]
-
-
     try:
 
-        with open(filename,'r') as task_lines:
+        with open(filename,'rb') as task_lines:
             for line in task_lines:
                 try:
                     count += 1
@@ -439,7 +438,7 @@ def main():
                     time.sleep(waitTime)
                 except Exception as err:
                     clr.print_red_text (err)
-
+        getExcel(postData)
     except Exception as err:
         clr.print_red_text(err)
 
