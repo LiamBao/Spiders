@@ -271,7 +271,7 @@ def  parseSingleThreadPageAndNeedTurnToNext(xmldata):
     nodes = getThreadNodes(xmldata)
     for node in nodes:
         url = node.xpath('.//a[@target="_blank"]/@href')
-        url = url[0]
+        url = url[0].strip()
         threadurl.append(url)
     return True if  getNextThreadPageNode(xmldata) != None  else False
 
@@ -295,8 +295,6 @@ def getNextPostPageNode(xmldata):
 
 def turnToPage(url):
 
-    # waitTime=random.uniform(1, 2)
-    # time.sleep(waitTime)
     res = requests.get(str(url), timeout=10)
     xmldata = res.content.decode('utf-8', 'replace').encode('utf8', 'replace')
     return xmldata
@@ -346,8 +344,8 @@ def postParse(url2parse):
 def doCapture(keyword):
 
     clr = Color()
-    global threadurl,postData,postFlag,postDateTime
-    theKeywordThreadUrl = "http://search.cehome.com/cse/search?q="+keyword+"&p=1&s=2289651421703031038&nsid=5"
+    global threadurl,postData,postFlag
+    theKeywordThreadUrl = "http://search.cehome.com/cse/search?q="+keyword+"&p=0&s=2289651421703031038&nsid=5"
     theCurrentPage=1
 
     try:
@@ -357,14 +355,14 @@ def doCapture(keyword):
         xmldata = etree.HTML(xmldata)
         while (parseSingleThreadPageAndNeedTurnToNext(xmldata)):
             print (" Turn to next  threadPage : "+str(theCurrentPage))
-            pageNode = "http://search.cehome.com/cse/"+getNextThreadPageNode(xmldata)
-            if  not pageNode:
-                break
-            theCurrentPage +=  1
+            theCurrentPage += 1
             if theCurrentPage > 74:
                 break
+            if  not getNextThreadPageNode(xmldata):
+                break
+            pageNode = "http://search.cehome.com/cse/"+getNextThreadPageNode(xmldata)            
 
-            if len(threadurl)  > 200 and  postFlag == 1:
+            if len(threadurl)  > 200 and postFlag == 1:
                 for url in threadurl:
                     if url.find('thread') < 0:
                         continue
@@ -382,10 +380,10 @@ def doCapture(keyword):
                 # waitTime = random.uniform(1, 2)
                 # clr.print_green_text("  Wait for "+str(int(waitTime))+" Seconds!")
                 # time.sleep(waitTime)
-            clr.print_green_text('Counts ' + str(len(postData)) + '  posts')
-            if len(postData) > 20000:
-                getExcel(postData)
-                postData = []
+            clr.print_green_text('counts ' + str(len(postData)) + '  posts')
+        if len(postData) > 20000:
+            getExcel(postData)
+            postData = []
 
     except Exception as err:
         print ('has an error while spidering')
@@ -396,65 +394,51 @@ def doCapture(keyword):
 
 def main():
 
-    global clr
+    global clr,postData,postDateTime
     clr = Color()
     clr.print_green_text('*'*40)
     clr.print_green_text('##  Python  3.4')
     clr.print_green_text('##  Author  Liam')
     clr.print_green_text('##  Date   11/10/2016')
-    clr.print_green_text('##  Crawl   Tmall_Thread(Keyword & Shop)')
+    clr.print_green_text('##  Crawl   CehomeSearch')
     clr.print_green_text('*'*40)
 
     clr.print_green_text('Enter to Open File')
     dlg = win32ui.CreateFileDialog(1)   # 表示打开文件对话框
-    dlg.SetOFNInitialDir('C:/')   # 设置打开文件对话框中的初始显示目录
+    dlg.SetOFNInitialDir('C:/')  # 设置打开文件对话框中的初始显示目录
     dlg.DoModal()
     filename = dlg.GetPathName()
     clr.print_green_text('Open File or directory: '+filename)
     # f = open(os.getcwd()+r'/indexCrawl.txt','rb')
     if filename is None or filename == '':
        sys.exit(0)
-    f = open(filename,'rb')
-    task_lines = [i for i in f.readlines()]
-    f.close()
+
+    postDateTime = input("请输入抓取截止日期：(格式如 2016-01-01)")
 
     count = 0
-    allthread = []
+    postData = []
     data =[]
 
 
     try:
 
-        for line in task_lines:
-            try:
-                count += 1
-                line = str(line, encoding='utf-8')
-                line = line.replace(')','').replace('main(','').replace('\'','')
-                line_split = line.strip()
-                
-                if not line:
-                    continue
-                line_split = line_split.split(',')
-                clr.print_green_text('Start Parsing Keyword/Shop : '+str(line_split))
-                if len(line_split) == 6 :
-                    data = doCapture(line_split[0],line_split[1],line_split[2],line_split[3],line_split[4],line_split[5])
-                    clr.print_green_text('KeyWord '+str(line_split)+ ' parsing Successfully!')
-                elif len(line_split) == 7:
-                    data = shop_doCapture(line_split[0],line_split[1],line_split[2],line_split[3],line_split[4],line_split[5],line_split[6])
-                    clr.print_green_text(' Shop '+str(line_split)+ ' parsing Successfully!')
-                for i in data:
-                    allthread.append(i)
-                clr.print_green_text ('Counts '+str(len(allthread))+' threads')
-                if len(allthread) > 10000:    #避免消耗内存过大机器崩溃
-                    getExcel(allthread)
-                    allthread =[]
-                waitTime = random.uniform(2, 4)
-##                clr.print_green_text("  Wait for "+str(int(waitTime))+" Seconds!")
-                # time.sleep(waitTime)
-            except Exception as err:
-                clr.print_red_text (err)
-
-        getExcel(allthread)
+        with open(filename,'r') as task_lines:
+            for line in task_lines:
+                try:
+                    count += 1
+                    line = str(line, encoding='utf-8')
+                    line = line.strip()
+                    
+                    if not line:
+                        continue
+                    clr.print_green_text('Start Parsing keyword : '+str(line))
+                    doCapture(line)
+                    clr.print_green_text('Keyword: '+line+ ' parsing Done!')
+                    waitTime = random.uniform(3, 5)
+                    clr.print_green_text("  wait for "+str(int(waitTime))+" Seconds!")
+                    time.sleep(waitTime)
+                except Exception as err:
+                    clr.print_red_text (err)
 
     except Exception as err:
         clr.print_red_text(err)
