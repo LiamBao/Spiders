@@ -1,2 +1,1 @@
-#用于抓取autohome质量反馈区数据
-
+# BBS 抓取.包括帖子thread层及文章回复post层
