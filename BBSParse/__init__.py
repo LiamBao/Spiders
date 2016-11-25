@@ -5,15 +5,12 @@ from lxml import etree
 import xlsxwriter as wx
 from .colorFont import Color
 import .dateParse
-
 from .Autohome import AutohomeClient
+from .config import postCrawlFlag,postData,postDateTime
 
+__all__ = ['BBSParse']
 
-__author__ ='liam'
-__version__ = 'v1.0'
-
-
-class autoHome101(object):
+class BBSSpider(object):
 	"""docstring for autoHome101"""
 	def __init__(self, url):
 		# super(autoHome101, self).__init__()
@@ -22,45 +19,22 @@ class autoHome101(object):
         self.__baseClient   = None
         self.__client       = None
         self.__functionDict = {'default': lambda x: 0}
-        self.__isRunning    = False
+        if 'http://' == url[:7] or 'https://' == url[:8]:
+            self.__url = url
+        else:
+            self.__url = 'http://' + url
 
-		if 'http://club.autohome.com.cn' == url[:32] and url.find('?type=101')>-1:
-			self.__url = url
-		else:
-			input('Url Error! Enter to exit')
-			exit()
 
         for u, bc in {'club.autohome.com'   : AutohomeClient,
                 'cehome.com'			    : DouYuDanMuClient, 
                 ''}.items() :
             if re.match(r'^(?:http://)?.*?%s/(.+?)$' % u, url):
                 self.__baseClient = bc; break
-    def __register(self, fn, msgType):
-        if fn is None:
-            if msgType == 'default':
-                self.__functionDict['default'] = lambda x: 0
-            elif self.__functionDict.get(msgType):
-                del self.__functionDict[msgType]
-        else:
-            self.__functionDict[msgType] = fn
-    def isValid(self):
-        return self.__baseClient is not None
-    def default(self, fn):
-        self.__register(fn, 'default')
-        return fn
-    def danmu(self, fn):
-        self.__register(fn, 'danmu')
-        return fn
-    def gift(self, fn):
-        self.__register(fn, 'gift')
-        return fn
-    def other(self, fn):
-        self.__register(fn, 'other')
+
         return fn
     def start(self, blockThread = False, pauseTime = .1):
-        if not self.__baseClient or self.__isRunning: return False
+        if not self.__baseClient: return False
         self.__client = self.__baseClient(self.__url)
-        self.__isRunning = True
         receiveThread = threading.Thread(target=self.__client.start)
         receiveThread.setDaemon(True)
         receiveThread.start()

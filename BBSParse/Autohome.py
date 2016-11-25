@@ -8,9 +8,13 @@ from .Abstract import AbstractSiteClient
 class AutohomeClient(AbstractSiteClient):
     def _is_valid_page(self):
         url = self.url
-        rownodes = re.findall('<dl class="list_dl(.*?)</dl>', requests.get(url).text)
-        # self.serverUrl = re.findall(b'<server>(.*?)</server>', r.content)[0].decode('ascii')
-        return len(rownodes) >0
+        if 'http://club.autohome.com.cn' == url[:32] and url.find('?type=101')>-1:
+            rownodes = re.findall('<dl class="list_dl(.*?)</dl>', requests.get(url).text)
+            return len(rownodes) > 0
+        else:
+            input('Url Error! Enter to exit')
+            return None
+
     def _prepare_env(self):
         return (self.serverUrl, 788), {}
     def _init_socket(self, danmu, roomInfo):
