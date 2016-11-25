@@ -26,7 +26,7 @@ class BBSSpider(object):
 
 
         for u, bc in {'club.autohome.com'   : AutohomeClient,
-                'cehome.com'			    : DouYuDanMuClient, 
+                'cehome.com'		    : CehomeClient, 
                 ''}.items() :
             if re.match(r'^(?:http://)?.*?%s/(.+?)$' % u, url):
                 self.__baseClient = bc; break
