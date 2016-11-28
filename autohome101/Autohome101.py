@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import re, ctypes,requests,random,os,ctypes,win32ui,sys,math,time,threading
+import re,requests,random,win32ui,sys,math,threading
 
 from lxml import etree
-import xlsxwriter as wx
 from colorFont import Color
 from dateParse import *
 from auto101_dtl import  *
@@ -125,12 +124,6 @@ def ThreadCapture(url):
         print('Finish Spidering')
 
 
-
-
-# postCapture(1000,'http://club.autohome.com.cn/bbs/thread-c-266-51693908-1.html','subject','2015-07-07 09:33:43')
-
-
-
 def main():
 
     global postDateTime,postData
@@ -156,7 +149,7 @@ def main():
     while True:
         postDateTime = input('请输入抓取截止日期 (格式：2016-1-1):')
         if postDateTime and re.search('^\d{4}-\d{1,2}-\d{1,2}$',postDateTime):
-            postDateTime = parseDateStrToStamp(parseDateStr(parseDate(postDateTime)))
+            postDateTime = postDateTime
             break
         else:
             clr.print_red_text("时间格式错误，请重新输入谢谢！")
