@@ -12,7 +12,7 @@ class AutohomeClient(AbstractSiteClient):
             rownodes = re.findall('<dl class="list_dl(.*?)</dl>', requests.get(url).text)
             return len(rownodes) > 0
         else:
-            input('Url Error! Enter to exit')
+            print('Url Error! Enter to exit')
             return None
 
     def _prepare_env(self):

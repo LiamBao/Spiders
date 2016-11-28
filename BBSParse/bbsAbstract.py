@@ -30,12 +30,11 @@ class AbstractSiteClient(object):
                 data = self._parse_single_row(rownode)
                 if data and parseDateStrToStamp(parseDateStr(parseDate(data[3]))) >= parseDateStrToStamp(parseDateStr(parseDate(self.postDateTime))):
                     postData.appand(data)
-                else:
-                    break
-            print (" Turn to next  threadPage : "+str(self.theCurrentPage))
+                else: break
+            print (" Turn to next Page : "+str(self.theCurrentPage))
             self.theCurrentPage += 1
             self.url = self._get_next_page(res)
-            res = self._turn_to_next_page(self.url)
+            res = self._load_page(self.url)
             if not res:break
 
 
@@ -53,9 +52,6 @@ class AbstractSiteClient(object):
         return None
     @abc.abstractmethod
     def _get_rownodes(self,res):
-        return None
-    @abc.abstractmethod
-    def _turn_to_next_page(self):
         return None
 
 class BBSException(Exception):

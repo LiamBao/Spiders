@@ -26,12 +26,11 @@ class BBSSpider(object):
 
 
         for u, bc in {'club.autohome.com'   : AutohomeClient,
-                'cehome.com'		    : CehomeClient, 
-                ''}.items() :
+                'cehome.com'		        : CehomeClient, 
+                }.items() :
             if re.match(r'^(?:http://)?.*?%s/(.+?)$' % u, url):
                 self.__baseClient = bc; break
 
-        return fn
     def start(self, blockThread = False, pauseTime = .1):
         if not self.__baseClient: return False
         self.__client = self.__baseClient(self.__url)
@@ -60,6 +59,3 @@ class BBSSpider(object):
             danmuThread.setDaemon(True)
             danmuThread.start()
         return True
-    def stop(self):
-        self.__isRunning = False
-        if self.__client: self.__client.deprecated = True
