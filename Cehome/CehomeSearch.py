@@ -16,25 +16,24 @@ def postParse(urls):
     thepostCurrentPage=1
 
     for  url2parse in urls:
-	    try:
-	        print ('start loadPage: '+ url2parse)
-        	res = requests.get(theKeywordThreadUrl, timeout = 20)
-        	xmldata = res.content.decode('utf-8', 'replace').encode('utf8', 'replace')
-        	xmldata = etree.HTML(xmldata)
-	        subject = parseSubject(xmldata)
-	        while (parseSinglePostPageAndNeedTurnToNext(xmldata,subject,url2parse)):
-	            thepostCurrentPage += 1
-	            print ("Turn to next postPage "+str(thepostCurrentPage))
-	            pageNode = getNextPostPageNode(xmldata)
-	            if not pageNode :
-	                break
-	            xmldata = turnTopostPage(pageNode)
+        try:
+            print ('start load postPage: '+ url2parse)
+            res = requests.get(theKeywordThreadUrl, timeout = 20).text
+            xmldata = etree.HTML(res)
+            subject = parseSubject(xmldata)
+            while (parseSinglePostPageAndNeedTurnToNext(xmldata,subject,url2parse)):
+                thepostCurrentPage += 1
+                print ("Turn to next postPage "+str(thepostCurrentPage))
+                pageNode = getNextPostPageNode(xmldata)
+                if not pageNode :
+                    break
+                xmldata = turnTopostPage(pageNode)
 	        
-	    except Exception as err:
-	        print ('Has an error while spidering')
-	        print(err)
-	    finally:
-	        print('Finish Spidering')
+        except Exception as err:
+            print ('Has an error while spidering')
+            print(err)
+        finally:
+            print('Finish Spidering')
 
 
 def threadStart(threadurl):
@@ -55,9 +54,6 @@ def threadStart(threadurl):
         for t in threads:
           t.join()
         print('====  threading end ====')
-
-
-
 
 def doCapture(keyword):
 
