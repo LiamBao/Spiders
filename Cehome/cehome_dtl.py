@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import re,requests,random,math,threading,ctypes,datetime,json
-import xlsxwriter as wx
+
 from lxml import etree
 from colorFont import Color
 from dateParse import *
@@ -21,6 +21,10 @@ def checkPostPage(xmldata):
 def getRowNodes(xmldata):
     data = xmldata
     rownodes=data.xpath('.//div[@id="postlist"]/div/table')
+
+    # contains:.//a[contains(@class,'btnX') and .//text()='Sign in']
+	# starts-with：.//a[starts-with(@class,'btnSelectedBG')]
+
     if len(rownodes)==0:
         raise NameError('Can not parse post RowNodes!')
     return rownodes
@@ -117,7 +121,7 @@ def parseSinglePostPageAndNeedTurnToNext(xmldata,subject,url2parse):
 
     for node in nodes:
         post=parseSinglePostRow(node,subject,url2parse)
-        if parseDateStrToStamp(post[3]) >= parseDateStrToStamp(parseDateStr(parseDate(postDateTime))):
+        if parseDateStrToStamp(parseDateStr(parseDate(post[3]))) >= parseDateStrToStamp(parseDateStr(parseDate(postDateTime))):
             postData.append(post)
             print('save a record successfully !')
     return True if getNextPostPageNode(xmldata) != None else False
@@ -136,6 +140,7 @@ def  parseSingleThreadPageAndNeedTurnToNext(xmldata):
 
 
 def getNextThreadPageNode(xmldata):
+
     node=xmldata.xpath('.//a[@class="pager-next-foot n"]')
     if len(node) == 0:
         return None

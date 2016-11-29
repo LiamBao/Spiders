@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import re,requests,random,win32ui,sys,math,threading,ctypes,datetime,time,json,os
+import re,requests,random,win32ui,sys,math,threading,time
 
 from lxml import etree
 from colorFont import Color
@@ -12,14 +12,15 @@ __version__ = 'v2.0'
 
 def postParse(urls):
 
-    global postData,thepostCurrentPage
+    global postData
     thepostCurrentPage=1
 
     for  url2parse in urls:
         try:
-            print ('start load postPage: '+ url2parse)
-            res = requests.get(theKeywordThreadUrl, timeout = 20).text
-            xmldata = etree.HTML(res)
+            print ('start loadPage: '+ url2parse)
+            res = requests.get(theKeywordThreadUrl, timeout = 20)
+            xmldata = res.content.decode('utf-8', 'replace').encode('utf8', 'replace')
+            xmldata = etree.HTML(xmldata)
             subject = parseSubject(xmldata)
             while (parseSinglePostPageAndNeedTurnToNext(xmldata,subject,url2parse)):
                 thepostCurrentPage += 1
@@ -28,13 +29,12 @@ def postParse(urls):
                 if not pageNode :
                     break
                 xmldata = turnTopostPage(pageNode)
-	        
-        except Exception as err:
-            print ('Has an error while spidering')
-            print(err)
-        finally:
-            print('Finish Spidering')
 
+        except Exception  as err:
+                print ('Has an error while spidering')
+                print(err)
+        finally:
+                print('Finish Spidering')
 
 def threadStart(threadurl):
         list_thread=[]
@@ -125,12 +125,11 @@ def main():
        sys.exit(0)
 
     while True:
-        postDateTime = input('请输入抓取截止日期 (格式：2016-1-1):')
+        postDateTime = input('请输入抓取截止日期 (格式：2016-1-1): ')
         if postDateTime and re.search('^\d{4}-\d{1,2}-\d{1,2}$',postDateTime):
-            postDateTime = postDateTime
             break
         else:
-            clr.print_red_text("时间格式错误，请重新输入谢谢！")
+            clr.print_red_text("时间错误，请重新输入谢谢！")
             postDateTime = ''
 
     
@@ -139,7 +138,7 @@ def main():
     try:
 
         with open(filename,'rb') as task_lines:
-            for line in task_lines:
+            for 3 in task_lines:
                 try:
                     count += 1
                     line = str(line, encoding='utf-8')
@@ -158,11 +157,6 @@ def main():
         getExcel(postData)
     except Exception as err:
         clr.print_red_text(err)
-
-
-
-
-
 
 if __name__ == '__main__':
     main()
