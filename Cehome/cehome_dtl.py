@@ -62,7 +62,6 @@ def parsePosterURL(rownode):
         node = rownode.xpath('.//li[@class="txtcenter fw"]/a[0]/@href')
     if len(node)==0:
         return None
-
     return node[0]
 
 
@@ -72,7 +71,6 @@ def parseFloor(rownode):
         raise NameError('Can not parse Floor!')
     elif len(node) ==1:
         floor = node[0].xpath('string(.)')
-
     # floor=re.search("write\('(.*)'\)",floor).group(1)
     return floor
 

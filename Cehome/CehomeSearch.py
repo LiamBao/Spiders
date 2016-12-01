@@ -34,12 +34,11 @@ POST_HEADERS={
     'User-Agent':'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
 }
 
-def parseSinglePostPageAndNeedTurnToNext(xmldata,subject,url2parse):
+def parseSinglePostPageAndNeedTurnToNext(xmldata,subject,url2parse,thepostCurrentPage):
     global  postDateTime,postData
     if checkPostPage(xmldata):
         raise NameError('This Page is not a Post Page!')
     nodes = getRowNodes(xmldata)
-    thepostCurrentPage =1
     for node in nodes:
         post=parseSinglePostRow(node,subject,url2parse,thepostCurrentPage)
         if parseDateStrToStamp(parseDateStr(parseDate(post[3]))) >= parseDateStrToStamp(parseDateStr(parseDate(postDateTime))):
@@ -70,11 +69,9 @@ def  parseSingleThreadPageAndNeedTurnToNext(xmldata):
 
 
 def postParse(urls):
-
-    thepostCurrentPage=1
-
     for  url2parse in urls:
         try:
+            thepostCurrentPage = 1
             print ('start loadPage: '+ url2parse)
             try:
                 res = requests.get(url2parse, headers =POST_HEADERS ,timeout = 10).text
@@ -84,9 +81,10 @@ def postParse(urls):
             if not res: raise NameError('Can not get Post requests')
             xmldata = etree.HTML(res)
             subject = parseSubject(xmldata)
-            while (parseSinglePostPageAndNeedTurnToNext(xmldata,subject,url2parse)):
+            while (parseSinglePostPageAndNeedTurnToNext(xmldata,subject,url2parse,thepostCurrentPage)):
                 thepostCurrentPage += 1
                 print ("Turn to next postPage "+str(thepostCurrentPage))
+                pageNode  = getNextPostPageNode(xmldata)
                 xmldata = turnTopostPage(pageNode)
                 xmldata = etree.HTML(xmldata)
 
