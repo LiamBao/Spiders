@@ -1,3 +1,5 @@
+import  re,time,datetime
+
 def parseDate(datestr):
     if re.search('(\d+).*天[之|以]?前',datestr):
         tmp=re.search('(\d+).*天[之|以]?前',datestr).group(1)

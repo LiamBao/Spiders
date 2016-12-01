@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-import re,requests,random,math,threading,ctypes,datetime,json
+import  re,requests,random,time
 
 from lxml import etree
 from colorFont import Color
 from dateParse import *
-
+import xlsxwriter as wx
+from CehomeSearch import WEB_HEADERS
 
 def checkThreadPage(xmldata):
     if(len(getThreadNodes(xmldata))>0):
@@ -93,10 +94,9 @@ def parseDateOfPost(rownode):
     node=parseDateStr(parseDate(node))
     return node
    
-def parseSinglePostRow(rownode,thesubject,url2parse):
-    global  thepostCurrentPage
-    try:
+def parseSinglePostRow(rownode,thesubject,url2parse,thepostCurrentPage):
 
+    try:
         posterName=parsePosterName(rownode)
         dateOfPost=parseDateOfPost(rownode)
         content=parseContent(rownode)
@@ -113,30 +113,6 @@ def parseSinglePostRow(rownode,thesubject,url2parse):
     node = [1111,subject,content,dateOfPost,floor,posterName,posterURL,posterID,threadURL,isTopicPost,pageNum]
     return node
 
-def parseSinglePostPageAndNeedTurnToNext(xmldata,subject,url2parse):
-    global  postDateTime,postData
-    if checkPostPage(xmldata):
-        raise NameError('This Page is not a Post Page!')
-    nodes = getRowNodes(xmldata)
-
-    for node in nodes:
-        post=parseSinglePostRow(node,subject,url2parse)
-        if parseDateStrToStamp(parseDateStr(parseDate(post[3]))) >= parseDateStrToStamp(parseDateStr(parseDate(postDateTime))):
-            postData.append(post)
-            print('save a record successfully !')
-    return True if getNextPostPageNode(xmldata) != None else False
-
-
-def  parseSingleThreadPageAndNeedTurnToNext(xmldata):
-    global threadurl 
-    if checkThreadPage(xmldata):
-        raise NameError('This Page is not a thread Page')
-    nodes = getThreadNodes(xmldata)
-    for node in nodes:
-        url = node.xpath('.//a[@target="_blank"]/@href')
-        url = url[0].strip()
-        threadurl.append(url)
-    return True if  getNextThreadPageNode(xmldata) != None  else False
 
 
 def getNextThreadPageNode(xmldata):
@@ -158,24 +134,33 @@ def getNextPostPageNode(xmldata):
 
 
 def turnToPage(url):
-
-    res = requests.get(str(url), timeout=10)
-    xmldata = res.content.decode('utf-8', 'replace').encode('utf8', 'replace')
+    t=random.uniform(2, 3)
+    time.sleep(t)
+    try:
+        res = requests.get(url, headers=WEB_HEADERS, timeout=10)
+        xmldata = res.content.decode('utf-8', 'replace').encode('utf8', 'replace')
+    except:
+        xmldata = requests.get(url, headers=WEB_HEADERS, timeout=10).text
     return xmldata
 
-def turnTopostPage(url):
+def turnTopostPage(url2parse):
 
-    # waitTime=random.uniform(1, 2)
-    # time.sleep(waitTime)
-    res = requests.get(str(url), timeout=10).text
-    xmldata = etree.HTML(res)
+    t=random.uniform(1, 2)
+    time.sleep(t)
+    try:
+        xmldata = requests.get(url2parse, headers=WEB_HEADERS, timeout=10).text
+    except:
+        res = requests.get(url2parse, headers=WEB_HEADERS, timeout=10)
+        xmldata = res.content.decode('utf-8', 'replace').encode('utf8', 'replace')
+
     return xmldata
 
 
 def parseSubject(xmldata):
-
+    subject  =None
     subject = xmldata.xpath('.//td[@class = "ptm pbn"]/div[@class = "ts z h1"]')
-    subject  =subject[0].xpath('string(.)').strip().replace('[复制链接]','').replace('\n','')
+    if subject:
+        subject  =subject[0].xpath('string(.)').strip().replace('[复制链接]','').replace('\n','')
     return subject
 
 

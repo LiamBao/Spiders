@@ -9,26 +9,86 @@ from cehome_dtl import  *
 __author__ ='liam'
 __version__ = 'v2.0'
 
+WEB_HEADERS={
+    'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Encoding':'gzip, deflate, sdch',
+    'Accept-Language':'en-US,en;q=0.8,zh-CN;q=0.6,zh;q=0.4',
+    'Cache-Control':'max-age=0',
+    'Connection':'keep-alive',
+    'Host':'search.cehome.com',
+    # 'Host': 'bbs.cehome.com',
+    # 'Referer':'http://search.cehome.com/cse/search?q=%E5%8D%A1%E7%89%B9&click=1&s=2289651421703031038&nsid=5',
+    'Upgrade-Insecure-Requests':'1',
+    'User-Agent':'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
+}
+POST_HEADERS={
+    'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Encoding':'gzip, deflate, sdch',
+    'Accept-Language':'en-US,en;q=0.8,zh-CN;q=0.6,zh;q=0.4',
+    'Cache-Control':'max-age=0',
+    'Connection':'keep-alive',
+    'Host': 'bbs.cehome.com',
+    # 'Referer':'http://search.cehome.com/cse/search?q=%E5%8D%A1%E7%89%B9&click=1&s=2289651421703031038&nsid=5',
+    # 'Referer': '{url}',
+    'Upgrade-Insecure-Requests':'1',
+    'User-Agent':'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
+}
+
+def parseSinglePostPageAndNeedTurnToNext(xmldata,subject,url2parse):
+    global  postDateTime,postData
+    if checkPostPage(xmldata):
+        raise NameError('This Page is not a Post Page!')
+    nodes = getRowNodes(xmldata)
+    thepostCurrentPage =1
+    for node in nodes:
+        post=parseSinglePostRow(node,subject,url2parse,thepostCurrentPage)
+        if parseDateStrToStamp(parseDateStr(parseDate(post[3]))) >= parseDateStrToStamp(parseDateStr(parseDate(postDateTime))):
+            postData.append(post)
+            print('save a record successfully !')
+    return True if getNextPostPageNode(xmldata) else False
+
+
+
+def  parseSingleThreadPageAndNeedTurnToNext(xmldata):
+    global threadurl
+    if checkThreadPage(xmldata):
+        raise NameError('This Page is not a thread Page')
+    nodes = getThreadNodes(xmldata)
+    for node in nodes:
+        url = node.xpath('.//a[@target="_blank"]/@href')
+        url = url[0].strip()
+        # http://bbs.cehome.com/thread-31175-1-1.html
+        if url.find('viewthread')>-1:
+            threadurl.append(url)
+        elif url.find('cehome.com/thread')>-1:
+            if re.search('^http://bbs.cehome.com/thread-\d+-\d+-1.html$',url):
+                url  = re.search("^(http://bbs.cehome.com/thread-\d+)-\d+-1.html$",url).group(1)
+                url = url+'-1-1.html'
+                threadurl.append(url)
+    return True if  getNextThreadPageNode(xmldata)  else False
+
+
 
 def postParse(urls):
 
-    global postData
     thepostCurrentPage=1
 
     for  url2parse in urls:
         try:
             print ('start loadPage: '+ url2parse)
-            res = requests.get(theKeywordThreadUrl, timeout = 20)
-            xmldata = res.content.decode('utf-8', 'replace').encode('utf8', 'replace')
-            xmldata = etree.HTML(xmldata)
+            try:
+                res = requests.get(url2parse, headers =POST_HEADERS ,timeout = 10).text
+            except:
+                res = requests.get(url2parse, headers=POST_HEADERS, timeout=10)
+                res = res.content.decode('utf-8', 'replace').encode('utf8', 'replace')     # 特殊编码
+            if not res: raise NameError('Can not get Post requests')
+            xmldata = etree.HTML(res)
             subject = parseSubject(xmldata)
             while (parseSinglePostPageAndNeedTurnToNext(xmldata,subject,url2parse)):
                 thepostCurrentPage += 1
                 print ("Turn to next postPage "+str(thepostCurrentPage))
-                pageNode = getNextPostPageNode(xmldata)
-                if not pageNode :
-                    break
                 xmldata = turnTopostPage(pageNode)
+                xmldata = etree.HTML(xmldata)
 
         except Exception  as err:
                 print ('Has an error while spidering')
@@ -55,17 +115,18 @@ def threadStart(threadurl):
           t.join()
         print('====  threading end ====')
 
+
 def doCapture(keyword):
 
     clr = Color()
     global threadurl,postData
-    theKeywordThreadUrl = "http://search.cehome.com/cse/search?q="+keyword+"&p=0&s=2289651421703031038&nsid=5"
+    theKeywordThreadUrl = "http://search.cehome.com/cse/search?q="+keyword+"&p=0&s=2289651421703031038&srt=def&nsid=5"
     theCurrentPage=1
     threadurl = []
 
     try:
 
-        res = requests.get(theKeywordThreadUrl, timeout = 20)
+        res = requests.get(theKeywordThreadUrl ,headers  =WEB_HEADERS, timeout = 10)
         xmldata = res.content.decode('utf-8', 'replace').encode('utf8', 'replace')
         xmldata = etree.HTML(xmldata)
         while (parseSingleThreadPageAndNeedTurnToNext(xmldata)):
@@ -73,9 +134,7 @@ def doCapture(keyword):
             theCurrentPage += 1
             if theCurrentPage > 74:
                 break
-            if  not getNextThreadPageNode(xmldata):
-                break
-            pageNode = "http://search.cehome.com/cse/"+getNextThreadPageNode(xmldata)            
+            pageNode = "http://search.cehome.com/cse/"+getNextThreadPageNode(xmldata)
 
             # if len(threadurl)  > 200:
             #     for url in threadurl:
@@ -92,9 +151,9 @@ def doCapture(keyword):
         threadStart(threadurl)
 
         clr.print_green_text('counts ' + str(len(postData)) + '  posts')
-        # if len(postData) > 20000:
-        #     getExcel(postData)
-        #     postData = []
+        if len(postData) > 20000:
+            getExcel(postData)
+            postData = []
 
     except Exception as err:
         print ('has an error while spidering')
@@ -122,7 +181,7 @@ def main():
     clr.print_green_text('Open File or directory: '+filename)
     # f = open(os.getcwd()+r'/indexCrawl.txt','rb')
     if filename is None or filename == '':
-       sys.exit(0)
+       sys.exit()
 
     while True:
         postDateTime = input('请输入抓取截止日期 (格式：2016-1-1): ')
@@ -138,7 +197,7 @@ def main():
     try:
 
         with open(filename,'rb') as task_lines:
-            for 3 in task_lines:
+            for line in task_lines:
                 try:
                     count += 1
                     line = str(line, encoding='utf-8')
@@ -149,14 +208,18 @@ def main():
                     clr.print_green_text('Start Parsing keyword : '+str(line))
                     doCapture(line)
                     clr.print_green_text('Keyword: '+line+ ' parsing Done!')
-                    waitTime = random.uniform(3, 5)
+                    waitTime = random.uniform(2, 4)
                     clr.print_green_text("  wait for "+str(int(waitTime))+" Seconds!")
                     time.sleep(waitTime)
                 except Exception as err:
                     clr.print_red_text (err)
+
         getExcel(postData)
     except Exception as err:
         clr.print_red_text(err)
+    finally:
+        input('Parse Successfully ! Enter to Exit~')
+
 
 if __name__ == '__main__':
     main()

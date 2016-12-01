@@ -10,6 +10,17 @@ __author__ ='liam'
 __version__ = 'v1.0'
 
 
+WEB_HEADERS = {'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+'Accept-Encoding':'gzip, deflate, sdch',
+'Accept-Language':'en-US,en;q=0.8,zh-CN;q=0.6,zh;q=0.4',
+'Cache-Control':'max-age=0',
+'Connection':'keep-alive',
+'Host':'club.autohome.com.cn',
+'Upgrade-Insecure-Requests':'1',
+'User-Agent':'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
+}
+
+
 def parseSinglePostPageAndNeedTurnToNext(xmldata,theThreadUrl,theSubject):
     global postData,postDateTime
     if checkPostPage(xmldata):
@@ -51,7 +62,7 @@ def postCapture(url):
     for  theThreadUrl in url:
         try:
             print ('start loadPostPage:'+theThreadUrl)
-            res=requests.get(theThreadUrl,timeout =10).text
+            res=requests.get(theThreadUrl,headers = WEB_HEADERS,timeout =10).text
             xmldata = etree.HTML(res)
             theSubject  = xmldata.xpath('.//div[@class ="consnav"]/span[6]')
             theSubject = theSubject[0].xpath('string(.)').strip()
@@ -94,7 +105,7 @@ def ThreadCapture(url):
     threadurl = []
 
     try:
-        res = requests.get(url, timeout = 10).text
+        res = requests.get(url, headers = WEB_HEADERS,timeout = 10).text
         xmldata = etree.HTML(res)
         while (parseSingleThreadPageAndNeedTurnToNext(xmldata)):
             theCurrentPage  += 1
@@ -176,14 +187,16 @@ def main():
                     clr.print_green_text('Start parsing forumUrl : '+str(line))
                     ThreadCapture(line)
                     clr.print_green_text('Url: '+str(line)+ ' parsing Done!')
-
+                    t = random.uniform(2, 4)
+                    clr.print_green_text("threadCapture  Wait for "+str(int(t))+" Seconds!")
+                    time.sleep(t)
                     if len(postData) > 20000:
                         clr.print_green_text('Counts ' + str(len(postData)) + '  posts')
                         getExcel(postData)
                         postData = []
                         waitTime = random.uniform(3, 5)
                         clr.print_green_text("  Wait for "+str(int(waitTime))+" Seconds!")
-                        # time.sleep(waitTime)
+                        time.sleep(waitTime)
                 except Exception as err:
                     clr.print_red_text (err)
             if postData:
@@ -192,6 +205,8 @@ def main():
 
     except Exception as err:
         clr.print_red_text(err)
+    finally:
+        input('Enter to exit ')
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ from lxml import etree
 import xlsxwriter as wx
 from colorFont import Color
 from dateParse import *
-
+from Autohome101 import WEB_HEADERS
 
 def checkThreadPage(xmldata):
     if(len(getThreadNodes(xmldata))>0):
@@ -147,7 +147,7 @@ def getNextPageNode(xmldata):
 
 
 def turnToPage(url):
-    # t=random.uniform(1, 3)
-    # time.sleep(2)
-    res=requests.get(url).text
+    t=random.uniform(1, 3)
+    time.sleep(t)
+    res=requests.get(url,headers = WEB_HEADERS,timeout =10).text
     return res
