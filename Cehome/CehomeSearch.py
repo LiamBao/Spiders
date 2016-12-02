@@ -37,6 +37,7 @@ POST_HEADERS={
 def parseSinglePostPageAndNeedTurnToNext(xmldata,subject,url2parse,thepostCurrentPage):
     global  postDateTime,postData
     if checkPostPage(xmldata):
+        print('=!'*10+url2parse)
         raise NameError('This Page is not a Post Page!')
     nodes = getRowNodes(xmldata)
     for node in nodes:
@@ -57,7 +58,14 @@ def  parseSingleThreadPageAndNeedTurnToNext(xmldata):
         url = node.xpath('.//a[@target="_blank"]/@href')
         url = url[0].strip()
         # http://bbs.cehome.com/thread-31175-1-1.html
-        if url.find('viewthread')>-1:
+        # http://bbs.cehome.com/forum.php?mod=viewthread&tid=658636&highlight=&page=5
+        # http://bbs.cehome.com/forum.php?mod=viewthread&tid=435987&page=1
+        # http://bbs.cehome.com/forum.php?mod=viewthread&tid=27259&highlight=
+        if url.find('viewthread')>-1 :
+            if  url.find('page')>-1:
+                if re.search('^.*?&page=\d+$',url):
+                    url = re.search("^(.*?&page=)\d+$",url).group(1)
+                    url = url+'1'
             threadurl.append(url)
         elif url.find('cehome.com/thread')>-1:
             if re.search('^http://bbs.cehome.com/thread-\d+-\d+-1.html$',url):

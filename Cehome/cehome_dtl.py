@@ -5,7 +5,7 @@ from lxml import etree
 from colorFont import Color
 from dateParse import *
 import xlsxwriter as wx
-from CehomeSearch import WEB_HEADERS
+from CehomeSearch import WEB_HEADERS,POST_HEADERS
 
 def checkThreadPage(xmldata):
     if(len(getThreadNodes(xmldata))>0):
@@ -22,12 +22,8 @@ def checkPostPage(xmldata):
 def getRowNodes(xmldata):
     data = xmldata
     rownodes=data.xpath('.//div[@id="postlist"]/div/table')
-
     # contains:.//a[contains(@class,'btnX') and .//text()='Sign in']
 	# starts-with：.//a[starts-with(@class,'btnSelectedBG')]
-
-    if len(rownodes)==0:
-        raise NameError('Can not parse post RowNodes!')
     return rownodes
 
 def getThreadNodes(xmldata):
@@ -132,7 +128,7 @@ def getNextPostPageNode(xmldata):
 
 
 def turnToPage(url):
-    t=random.uniform(2, 3)
+    t=random.uniform(2, 5)
     time.sleep(t)
     try:
         res = requests.get(url, headers=WEB_HEADERS, timeout=10)
@@ -143,14 +139,13 @@ def turnToPage(url):
 
 def turnTopostPage(url2parse):
 
-    t=random.uniform(1, 2)
+    t=random.uniform(2, 5)
     time.sleep(t)
     try:
-        xmldata = requests.get(url2parse, headers=WEB_HEADERS, timeout=10).text
+        xmldata = requests.get(url2parse, headers=POST_HEADERS, timeout=10).text
     except:
-        res = requests.get(url2parse, headers=WEB_HEADERS, timeout=10)
-        xmldata = res.content.decode('utf-8', 'replace').encode('utf8', 'replace')
-
+        res = requests.get(url2parse, headers=POST_HEADERS, timeout=10)
+        xmldata = res.content.decode('utf-8', 'replace').encode('utf8', 'replace')  # 特殊编码
     return xmldata
 
 
