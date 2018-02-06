@@ -4,7 +4,7 @@ all kinds of spiders to crawl sites
 
 > `for doc: [uWSGI]`(https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html)
 
-~~~
+>>>
 .
 ├── Django-tips                    django framework
 │   └── middleware_sample.py        middleware sample  
@@ -24,5 +24,4 @@ all kinds of spiders to crawl sites
     ├── gateway,py
     ├── lib_web_server.py           python lib socket server file
     └── socket_server.py
-
-~~~
+>>>
